@@ -414,6 +414,118 @@
     border-color:#f5ecc6;
   }
 
+  /* --- PEPPER DETAIL (character select) --- */
+  .detail{padding:4px 2px;}
+  .d-back{
+    font-family:var(--px);font-size:8px;
+    color:var(--crt-green);background:none;
+    border:2px solid var(--crt-green-dim);border-radius:6px;
+    padding:8px 12px;cursor:pointer;margin-bottom:16px;
+  }
+  .d-back:hover{background:rgba(143,212,122,.12);}
+  .d-top{
+    display:flex;gap:24px;align-items:center;justify-content:center;
+    flex-wrap:wrap;margin-bottom:10px;
+  }
+  .d-sprite{
+    image-rendering:pixelated;
+    width:150px;height:150px;
+    filter:drop-shadow(0 0 12px rgba(143,212,122,.25));
+  }
+  .d-info{min-width:230px;max-width:300px;text-align:left;}
+  .d-name{
+    font-family:var(--px);font-size:13px;line-height:1.7;
+    color:#fff;text-shadow:0 0 6px rgba(255,255,255,.5);
+    margin-bottom:6px;
+  }
+  .d-shu{
+    font-family:var(--px);font-size:9px;
+    color:var(--crt-red);text-shadow:0 0 6px rgba(232,106,90,.5);
+    margin-bottom:14px;
+  }
+  .stat-row{
+    display:flex;align-items:center;justify-content:space-between;
+    gap:12px;font-family:var(--vt);font-size:17px;
+    color:#dcead4;margin:6px 0;letter-spacing:1px;
+  }
+  .segs{display:flex;gap:3px;}
+  .seg{width:17px;height:11px;border:1px solid var(--crt-green-dim);}
+  .seg.f{
+    background:var(--crt-amber);border-color:var(--crt-amber);
+    box-shadow:0 0 6px rgba(232,193,75,.45);
+  }
+  .stat-row.hot .seg.f{
+    background:var(--crt-red);border-color:var(--crt-red);
+    box-shadow:0 0 6px rgba(232,106,90,.5);
+  }
+  .d-desc{
+    font-family:var(--vt);font-size:19px;line-height:1.45;
+    color:#c9dcc0;max-width:470px;margin:12px auto 6px;text-align:center;
+  }
+  .d-meta{
+    font-family:var(--vt);font-size:16px;letter-spacing:2px;
+    color:var(--crt-green-dim);text-align:center;margin-bottom:16px;
+  }
+  .d-buy{display:flex;justify-content:center;align-items:center;gap:16px;}
+  .d-price{
+    font-family:var(--px);font-size:13px;
+    color:var(--crt-green);text-shadow:0 0 6px rgba(143,212,122,.5);
+  }
+  .product{cursor:pointer;}
+  .product .pmore{
+    font-family:var(--vt);font-size:14px;letter-spacing:1px;
+    color:var(--crt-blue);opacity:0;transition:opacity .15s;
+    margin-top:4px;
+  }
+  .product:hover .pmore{opacity:.9;}
+
+  /* --- ATTRACT MODE --- */
+  #screen-attract{
+    background:var(--crt-bg);
+    text-align:center;
+    padding:30px 16px 26px;
+  }
+  .att-hiscore{
+    font-family:var(--px);font-size:8px;letter-spacing:1px;
+    color:var(--crt-blue);text-shadow:0 0 6px rgba(122,167,232,.5);
+    margin-bottom:24px;
+  }
+  .att-title{
+    font-family:var(--px);
+    font-size:clamp(14px,3vw,22px);
+    margin-bottom:26px;
+    animation:attHue 4s linear infinite;
+    text-shadow:0 0 14px currentColor;
+  }
+  @keyframes attHue{
+    0%,100%{color:#e8c14b;}
+    25%{color:#e86a5a;}
+    50%{color:#8fd47a;}
+    75%{color:#7aa7e8;}
+  }
+  .att-sprite{
+    image-rendering:pixelated;
+    width:150px;height:150px;
+    margin:0 auto 14px;display:block;
+    animation:attPulse 1s steps(2) infinite;
+  }
+  @keyframes attPulse{0%,100%{transform:scale(1);}50%{transform:scale(1.07);}}
+  .att-name{
+    font-family:var(--px);font-size:12px;color:#fff;
+    text-shadow:0 0 6px rgba(255,255,255,.5);
+    margin-bottom:10px;
+  }
+  .att-shu{
+    font-family:var(--px);font-size:9px;color:var(--crt-red);
+    text-shadow:0 0 6px rgba(232,106,90,.5);
+    margin-bottom:30px;
+  }
+  .att-press{
+    font-family:var(--px);font-size:10px;color:var(--crt-amber);
+    text-shadow:0 0 8px rgba(232,193,75,.6);
+    animation:offBlink 1.2s steps(1) infinite;
+  }
+
   /* --- CART --- */
   .cart-empty{
     text-align:center;
@@ -836,8 +948,19 @@
           <div class="tabs" id="tabs"></div>
           <div class="shelf">
             <div class="grid" id="product-grid"></div>
+            <div id="detail-view" style="display:none;"></div>
             <div id="cart-view" style="display:none;"></div>
           </div>
+        </div>
+
+        <!-- ATTRACT MODE -->
+        <div class="layer" id="screen-attract">
+          <div class="att-hiscore" id="att-hiscore"></div>
+          <div class="att-title">EMBER &amp; VINE</div>
+          <canvas class="att-sprite" id="att-sprite"></canvas>
+          <div class="att-name" id="att-name"></div>
+          <div class="att-shu" id="att-shu"></div>
+          <div class="att-press">PRESS ANY BUTTON</div>
         </div>
 
         <div class="power-flash"></div>
@@ -1103,13 +1226,25 @@ function drawSprite(canvas, shape, colors){
 const CATALOG = {
   peppers: [
     {id:"chocolate-primotalii", name:"Chocolate Primotalii", price:6.99, heat:"SUPERHOT ★★★★★", shape:"primo",
-     colors:{o:"#5e2b1a", L:"#8a4a2e", D:"#38160b", g:"#3f7d2c"}},
+     colors:{o:"#5e2b1a", L:"#8a4a2e", D:"#38160b", g:"#3f7d2c"},
+     shu:1200000, pack:10, days:"110-120",
+     stats:{"HEAT":5, "FLAVOR":5, "YIELD":3, "GROW EASE":2},
+     desc:"A chocolate take on the legendary Primotalii. Slow-ripening brown pods with a long stinger tail and a deep, smoky-sweet burn that just keeps climbing."},
     {id:"bbg-armageddon", name:"BBG Armageddon", price:6.99, heat:"SUPERHOT ★★★★★", crown:true, shape:"armageddon",
-     colors:{o:"#c22a14", L:"#e85a35", D:"#7a1408", k:"#1d0f12", s:"#2e2430", g:"#3f7d2c"}},
+     colors:{o:"#c22a14", L:"#e85a35", D:"#7a1408", k:"#1d0f12", s:"#2e2430", g:"#3f7d2c"},
+     shu:1300000, pack:10, days:"100-110",
+     stats:{"HEAT":5, "FLAVOR":4, "YIELD":4, "GROW EASE":2},
+     desc:"Black-shouldered pods that ripen to blood red. Bred for brutal heat with dark, smoky fruit up front. Not a starter pepper."},
     {id:"hellwalker-peach", name:"Hellwalker Peach", price:6.99, heat:"SUPERHOT ★★★★★", shape:"hellwalker",
-     colors:{o:"#f2b06a", L:"#ffd9a3", D:"#c9834a", p:"#6b2450", g:"#4a8a33"}},
+     colors:{o:"#f2b06a", L:"#ffd9a3", D:"#c9834a", p:"#6b2450", g:"#4a8a33"},
+     shu:1000000, pack:10, days:"100-110",
+     stats:{"HEAT":5, "FLAVOR":5, "YIELD":3, "GROW EASE":3},
+     desc:"Peach-toned pods with purple-mottled ridges. Bright apricot sweetness for about two seconds — then the floor drops out."},
     {id:"rb003", name:"RB003", price:6.99, heat:"SUPERHOT ★★★★★", shape:"rb003",
-     colors:{o:"#e03520", L:"#ff7a55", D:"#9c1c0c", g:"#5a9c3a"}}
+     colors:{o:"#e03520", L:"#ff7a55", D:"#9c1c0c", g:"#5a9c3a"},
+     shu:1400000, pack:10, days:"110-125",
+     stats:{"HEAT":5, "FLAVOR":4, "YIELD":3, "GROW EASE":2},
+     desc:"An unstable reaper-line cross from our own grow. Gnarled, bumpy pods with a stinger tip. Every plant is a little different; all of them are vicious."}
   ]
 };
 const ALL_PRODUCTS = [...CATALOG.peppers];
@@ -1146,10 +1281,12 @@ const crt = document.getElementById("crt");
 const layers = {
   off: document.getElementById("screen-off"),
   boot: document.getElementById("screen-boot"),
-  market: document.getElementById("screen-market")
+  market: document.getElementById("screen-market"),
+  attract: document.getElementById("screen-attract")
 };
 let poweredOn = false;
 let currentTab = 0;
+let currentDetail = null;
 let cart = {};
 try{ cart = JSON.parse(localStorage.getItem("embervine-cart")||"{}"); }catch(e){ cart = {}; }
 Object.keys(cart).forEach(id=>{ if(!ALL_PRODUCTS.some(p=>p.id===id)) delete cart[id]; });
@@ -1215,6 +1352,7 @@ function runBoot(){
         sfx.ready();
         renderTabs();
         renderTab();
+        resetIdle();
       }, 700);
       return;
     }
@@ -1244,6 +1382,7 @@ function renderTabs(){
 function switchTab(idx, tilt){
   if(!poweredOn) return;
   currentTab = ((idx % TABS.length) + TABS.length) % TABS.length;
+  currentDetail = null;
   sfx.blip();
   if(tilt) tiltJoysticks(tilt);
   renderTabs();
@@ -1252,15 +1391,22 @@ function switchTab(idx, tilt){
 
 function renderTab(){
   const grid = document.getElementById("product-grid");
+  const detailView = document.getElementById("detail-view");
   const cartView = document.getElementById("cart-view");
   const key = TABS[currentTab].key;
+  grid.style.display = "none";
+  detailView.style.display = "none";
+  cartView.style.display = "none";
   if(key === "cart"){
-    grid.style.display = "none";
     cartView.style.display = "block";
     renderCart();
     return;
   }
-  cartView.style.display = "none";
+  if(currentDetail){
+    detailView.style.display = "block";
+    renderDetail();
+    return;
+  }
   grid.style.display = "grid";
   grid.innerHTML = "";
   CATALOG[key].forEach(p=>{
@@ -1287,6 +1433,10 @@ function renderTab(){
     ht.className = "pheat"; ht.textContent = p.heat;
     card.appendChild(ht);
 
+    const more = document.createElement("div");
+    more.className = "pmore"; more.textContent = "» VIEW STATS";
+    card.appendChild(more);
+
     const pr = document.createElement("div");
     pr.className = "pprice"; pr.textContent = "$" + p.price.toFixed(2);
     card.appendChild(pr);
@@ -1294,11 +1444,58 @@ function renderTab(){
     const btn = document.createElement("button");
     btn.className = "buy-btn";
     btn.textContent = "START (Germinate)";
-    btn.onclick = ()=>addToCart(p, btn);
+    btn.onclick = (e)=>{ e.stopPropagation(); addToCart(p, btn); };
     card.appendChild(btn);
+
+    card.addEventListener("click", ()=>openDetail(p.id));
 
     grid.appendChild(card);
   });
+}
+
+function openDetail(id){
+  currentDetail = id;
+  sfx.blip();
+  renderTab();
+}
+function closeDetail(){
+  currentDetail = null;
+  sfx.blip();
+  renderTab();
+}
+
+function renderDetail(){
+  const v = document.getElementById("detail-view");
+  const p = ALL_PRODUCTS.find(x=>x.id===currentDetail);
+  if(!p){ closeDetail(); return; }
+
+  const statRows = Object.entries(p.stats).map(([label, val])=>{
+    const segs = [1,2,3,4,5].map(i=>`<span class="seg${i<=val?" f":""}"></span>`).join("");
+    return `<div class="stat-row${label==="HEAT"?" hot":""}"><span>${label}</span><span class="segs">${segs}</span></div>`;
+  }).join("");
+
+  v.innerHTML = `
+    <div class="detail">
+      <button class="d-back" id="d-back">◀ BACK</button>
+      <div class="d-top">
+        <canvas class="d-sprite" id="d-sprite"></canvas>
+        <div class="d-info">
+          <div class="d-name">${p.name}</div>
+          <div class="d-shu">~${p.shu.toLocaleString("en-CA")} SHU</div>
+          ${statRows}
+        </div>
+      </div>
+      <div class="d-desc">${p.desc}</div>
+      <div class="d-meta">${p.pack} SEEDS PER PACK · ${p.days} DAYS TO RIPE PODS · GROWN IN OSHAWA</div>
+      <div class="d-buy">
+        <span class="d-price">$${p.price.toFixed(2)}</span>
+        <button class="buy-btn" id="d-add">START (Germinate)</button>
+      </div>
+    </div>
+  `;
+  drawSprite(document.getElementById("d-sprite"), SHAPES[p.shape], p.colors);
+  document.getElementById("d-back").onclick = closeDetail;
+  document.getElementById("d-add").onclick = ()=>addToCart(p, document.getElementById("d-add"));
 }
 
 function addToCart(p, btn){
@@ -1408,7 +1605,76 @@ document.addEventListener("keydown", e=>{
   if(!poweredOn) return;
   if(e.key === "ArrowLeft"){ switchTab(currentTab-1, "l"); }
   if(e.key === "ArrowRight"){ switchTab(currentTab+1, "r"); }
+  if(e.key === "Escape" && currentDetail){ closeDetail(); }
 });
+
+/* ================= ATTRACT MODE ================= */
+const ATTRACT_DELAY = 45000;
+let attractTimer = null, attractCycle = null, attractIdx = 0, attractOn = false;
+let swallowNextClick = false;
+
+function resetIdle(){
+  clearTimeout(attractTimer);
+  if(poweredOn && !attractOn){
+    attractTimer = setTimeout(enterAttract, ATTRACT_DELAY);
+  }
+}
+
+function attractShow(){
+  const p = ALL_PRODUCTS[attractIdx % ALL_PRODUCTS.length];
+  drawSprite(document.getElementById("att-sprite"), SHAPES[p.shape], p.colors);
+  document.getElementById("att-name").textContent = p.name.toUpperCase();
+  document.getElementById("att-shu").textContent = "~" + p.shu.toLocaleString("en-CA") + " SHU";
+}
+
+function enterAttract(){
+  if(!poweredOn || attractOn) return;
+  attractOn = true;
+  const top = ALL_PRODUCTS.reduce((a,b)=>a.shu>b.shu?a:b);
+  document.getElementById("att-hiscore").textContent =
+    "TOP HEAT · " + top.name.toUpperCase() + " · " + top.shu.toLocaleString("en-CA") + " SHU";
+  attractIdx = 0;
+  attractShow();
+  showLayer("attract");
+  attractCycle = setInterval(()=>{ attractIdx++; attractShow(); }, 4000);
+}
+
+function exitAttract(){
+  attractOn = false;
+  clearInterval(attractCycle);
+  showLayer("market");
+  sfx.blip();
+  resetIdle();
+}
+
+document.addEventListener("pointerdown", e=>{
+  if(attractOn){
+    e.preventDefault();
+    e.stopPropagation();
+    swallowNextClick = true;
+    exitAttract();
+    return;
+  }
+  resetIdle();
+}, true);
+
+document.addEventListener("click", e=>{
+  if(swallowNextClick){
+    swallowNextClick = false;
+    e.preventDefault();
+    e.stopPropagation();
+  }
+}, true);
+
+document.addEventListener("keydown", e=>{
+  if(attractOn){
+    e.preventDefault();
+    e.stopPropagation();
+    exitAttract();
+    return;
+  }
+  resetIdle();
+}, true);
 </script>
 </body>
 </html>
