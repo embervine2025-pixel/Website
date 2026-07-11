@@ -37,7 +37,12 @@
   }
   *{margin:0;padding:0;box-sizing:border-box;}
   button,.tab,.coin,.coin-door,.product{touch-action:manipulation;-webkit-tap-highlight-color:transparent;}
-  html,body{height:100%;}
+  html,body{
+    height:100%;
+    overflow-x:hidden;
+    overflow-x:clip;
+  }
+  html{overflow-y:auto;}
   body{
     background:var(--room);
     background-image:
@@ -58,7 +63,7 @@
   }
 
   /* ============ THE ROOM ============ */
-  body{position:relative;overflow-x:hidden;}
+  body{position:relative;}
   .room-glow{
     position:absolute;
     top:6%;
