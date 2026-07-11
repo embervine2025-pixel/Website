@@ -611,13 +611,13 @@
       <div class="joy" id="joy-l"><div class="base"></div><div class="stick"><div class="ball"></div></div></div>
       <div class="btn-cluster">
         <button class="arc-btn red" data-tab="0" title="Peppers"></button>
-        <button class="arc-btn yellow" data-tab="1" title="Herbs"></button>
-        <button class="arc-btn green" data-tab="2" title="Veggies"></button>
+        <button class="arc-btn yellow" data-tab="0" title="Peppers"></button>
+        <button class="arc-btn green" data-tab="1" title="Cart"></button>
       </div>
       <div class="btn-cluster">
-        <button class="arc-btn red" data-tab="3" title="Cart"></button>
+        <button class="arc-btn red" data-tab="0" title="Peppers"></button>
         <button class="arc-btn yellow" data-tab="0" title="Peppers"></button>
-        <button class="arc-btn green" data-tab="2" title="Veggies"></button>
+        <button class="arc-btn green" data-tab="1" title="Cart"></button>
       </div>
       <div class="joy" id="joy-r"><div class="base"></div><div class="stick"><div class="ball"></div></div></div>
     </div>
@@ -648,114 +648,87 @@
 <script>
 /* ================= PIXEL SPRITES ================= */
 const SHAPES = {
-  lantern: [
-    "......gg........",
-    ".....gg.........",
-    "....ggg.........",
-    "...ooooooo......",
-    "..oooooooooo....",
-    ".ooLLoooooooo...",
-    ".oLooooooooooo..",
-    "ooooooooooooooo.",
-    "ooooooooooooooo.",
-    "oooooooooooooDo.",
-    ".ooooooooooooD..",
-    ".oooooooooooDD..",
-    "..ooooooooooD...",
+  /* long wavy pod, skinny curled tail — chocolate primotalii */
+  primo: [
+    "..............g.",
+    ".............gg.",
+    "............gg..",
+    "....ooo....ooo..",
+    "...oooooo.oooo..",
+    "..oDooooooooo...",
+    "..oooLooooooo...",
+    "..ooooooooDo....",
     "...oooooooooo...",
-    "....oooooooo....",
-    ".....oooo......."
-  ],
-  reaper: [
-    ".......gg.......",
-    "......gg........",
-    ".....ggg........",
-    "....ooooo.......",
-    "...oooooooo.....",
-    "..ooDooooooo....",
-    "..oooooDoooo....",
-    ".oooLoooooooo...",
-    ".ooDoooooDooo...",
-    ".oooooooooooo...",
-    "..ooooDooooo....",
-    "..ooooooooo.....",
-    "...oooooooD.....",
-    "....ooooo.......",
-    ".....ooo........",
-    "......oo........",
-    ".......o........"
-  ],
-  slim: [
-    "........gg......",
-    ".......gg.......",
-    "......ggo.......",
-    ".....oooo.......",
-    "....oLooo.......",
-    "....oLooo.......",
-    "...ooooo........",
-    "...ooooo........",
-    "..ooooo.........",
-    "..ooooo.........",
-    ".oooooD.........",
-    ".ooooD..........",
+    "....Doooooooo...",
+    "...oooooooDo....",
+    "..oooooDoo......",
+    "..oooooo........",
+    ".ooooo..........",
     ".oooo...........",
     ".ooo............",
-    "..oo............",
-    "..o............."
+    "ooo.............",
+    "o..............."
   ],
-  cluster: [
-    "....g......g....",
-    "...ggg....ggg...",
-    "..ooggoo.oggoo..",
-    ".oooooooooooooo.",
-    "oooLoooooooLoooo",
-    "ooLooooooooooooo",
-    "oooooooooooooooo",
-    ".oooooo..oooooo.",
-    "...ooo.gg.ooo...",
-    "....ooggggoo....",
-    "...ooooooooooo..",
-    "..oLoooooooooo..",
-    "..oooooooooooo..",
-    "...oooooooooo...",
-    "....oooooooo....",
-    "......oooo......"
-  ],
-  herb: [
-    "....o...o.......",
-    "...ooo.ooo..o...",
-    "..ooooooooooo...",
-    "..oLoooooLooo...",
-    "...ooooooooo....",
-    "..ooooooooooo...",
-    ".oooLooooooooo..",
-    ".ooooooogooooo..",
-    "..oooooogooooo..",
-    "...ooooggooo....",
-    "....oooggoo.....",
-    ".......gg.......",
-    ".......gg.......",
-    "......ggg.......",
-    "......gg........",
-    ".....gg........."
-  ],
-  squash: [
-    "........gg......",
-    ".......ggg......",
-    "......ggg.......",
+  /* black-shouldered cone fading to red, long dark stem — bbg armageddon */
+  armageddon: [
+    ".......s........",
+    ".......s........",
+    "......ss........",
+    ".....kkkk.......",
+    "....kkkkkk......",
+    "...kkokkkkk.....",
+    "...kokkokkk.....",
+    "...okokooko.....",
+    "...ooookooo.....",
+    "...oookoooo.....",
+    "....ooooko......",
+    "....oooooo......",
+    "....koooo.......",
+    ".....oooo.......",
     ".....ooo........",
-    "....ooooo.......",
-    "....ooooo.......",
-    "...ooLoooo......",
-    "...ooooooo......",
-    "..ooLoooooo.....",
-    ".ooooooooooo....",
-    "ooooooooooooo...",
-    "oooooooooooooD..",
-    ".ooooooooooooD..",
-    "..oooooooooooD..",
-    "...oooooooooo...",
-    ".....oooooo....."
+    "......oo........",
+    "......o.........",
+    ".......k........"
+  ],
+  /* peach pod, purple-mottled ridges — hellwalker peach */
+  hellwalker: [
+    "......gg........",
+    ".....gg.........",
+    ".....gg.........",
+    "....pppp........",
+    "...ppoopp.......",
+    "...poooop.......",
+    "..ppoLooop......",
+    "..pooooooop.....",
+    "..poooooopp.....",
+    "..ooooooop......",
+    "..pooLoooo......",
+    "..pooooooo......",
+    "..ppoooopp......",
+    "...poooop.......",
+    "...ppoopp.......",
+    "....ppop........",
+    ".....pp.........",
+    "......p........."
+  ],
+  /* chunky bumpy round pod with stinger tail — rb003 */
+  rb003: [
+    "......gg........",
+    ".....ggg........",
+    "....oooooo......",
+    "..oooooooooo....",
+    "..oDoooLooooo...",
+    ".ooooDoooooDoo..",
+    ".oDoooooDooooo..",
+    ".ooooDoooooDoo..",
+    "..ooooooooooo...",
+    "..oDooooDooo....",
+    "...oooooooo.....",
+    "....oooooo......",
+    ".....oooD.......",
+    "......oo........",
+    "......o.........",
+    "......o........."
   ]
 };
 
@@ -784,41 +757,19 @@ function drawSprite(canvas, shape, colors){
 /* ================= CATALOG ================= */
 const CATALOG = {
   peppers: [
-    {id:"oshawa-orange", name:"Oshawa Orange", price:6.99, heat:"HEAT ★★★★☆", shape:"lantern",
-     colors:{o:"#e8862a", L:"#ffc46b", D:"#a85a12", g:"#3f7d2c"}},
-    {id:"carolina-reaper", name:"Carolina Reaper", price:6.99, heat:"HEAT ★★★★★", crown:true, shape:"reaper",
-     colors:{o:"#a32218", L:"#d9573f", D:"#5e0e08", g:"#3f7d2c"}},
-    {id:"ghost-pepper", name:"Ghost Pepper", price:6.99, heat:"HEAT ★★★★★", shape:"reaper",
-     colors:{o:"#d1401f", L:"#f07a4a", D:"#8a2410", g:"#3f7d2c"}},
-    {id:"scotch-bonnet", name:"Scotch Bonnet", price:5.99, heat:"HEAT ★★★★☆", shape:"lantern",
-     colors:{o:"#e0b530", L:"#ffe58a", D:"#a3800f", g:"#3f7d2c"}},
-    {id:"jalapeno", name:"Jalapeño", price:4.99, heat:"HEAT ★★☆☆☆", shape:"slim",
-     colors:{o:"#3d8f2f", L:"#7cc45f", D:"#20601a", g:"#2c5e20"}},
-    {id:"choco-habanero", name:"Choco Habanero", price:6.99, heat:"HEAT ★★★★☆", shape:"lantern",
-     colors:{o:"#6b3a1f", L:"#9c5e35", D:"#3d1e0c", g:"#3f7d2c"}}
-  ],
-  herbs: [
-    {id:"basil", name:"Genovese Basil", price:3.99, heat:"", shape:"herb",
-     colors:{o:"#4c9c3a", L:"#8fd47a", D:"#2c661f", g:"#7a5b2e"}},
-    {id:"cilantro", name:"Cilantro", price:3.99, heat:"", shape:"herb",
-     colors:{o:"#5fae43", L:"#a3dd85", D:"#37701f", g:"#7a5b2e"}},
-    {id:"thai-basil", name:"Thai Basil", price:4.49, heat:"", shape:"herb",
-     colors:{o:"#3e7d3f", L:"#77b26a", D:"#234d22", g:"#6e3f63"}}
-  ],
-  veggies: [
-    {id:"tomatoes", name:"Tomatoes", price:6.99, heat:"", shape:"cluster",
-     colors:{o:"#d4342a", L:"#f27a63", D:"#8f1c14", g:"#3f7d2c"}},
-    {id:"cucumber", name:"Cucumber", price:4.99, heat:"", shape:"slim",
-     colors:{o:"#2f7d3a", L:"#6db85e", D:"#1a5223", g:"#2c5e20"}},
-    {id:"butternut", name:"Butternut Squash", price:5.49, heat:"", shape:"squash",
-     colors:{o:"#dfae5c", L:"#f5d494", D:"#a87830", g:"#3f7d2c"}}
+    {id:"chocolate-primotalii", name:"Chocolate Primotalii", price:6.99, heat:"SUPERHOT ★★★★★", shape:"primo",
+     colors:{o:"#5e2b1a", L:"#8a4a2e", D:"#38160b", g:"#3f7d2c"}},
+    {id:"bbg-armageddon", name:"BBG Armageddon", price:6.99, heat:"SUPERHOT ★★★★★", crown:true, shape:"armageddon",
+     colors:{o:"#c22a14", L:"#e85a35", D:"#7a1408", k:"#1d0f12", s:"#2e2430", g:"#3f7d2c"}},
+    {id:"hellwalker-peach", name:"Hellwalker Peach", price:6.99, heat:"SUPERHOT ★★★★★", shape:"hellwalker",
+     colors:{o:"#f2b06a", L:"#ffd9a3", D:"#c9834a", p:"#6b2450", g:"#4a8a33"}},
+    {id:"rb003", name:"RB003", price:6.99, heat:"SUPERHOT ★★★★★", shape:"rb003",
+     colors:{o:"#e03520", L:"#ff7a55", D:"#9c1c0c", g:"#5a9c3a"}}
   ]
 };
-const ALL_PRODUCTS = [...CATALOG.peppers, ...CATALOG.herbs, ...CATALOG.veggies];
+const ALL_PRODUCTS = [...CATALOG.peppers];
 const TABS = [
   {key:"peppers", label:"PEPPERS"},
-  {key:"herbs",   label:"HERBS"},
-  {key:"veggies", label:"VEGGIES"},
   {key:"cart",    label:"MY CART"}
 ];
 
@@ -856,6 +807,7 @@ let poweredOn = false;
 let currentTab = 0;
 let cart = {};
 try{ cart = JSON.parse(localStorage.getItem("embervine-cart")||"{}"); }catch(e){ cart = {}; }
+Object.keys(cart).forEach(id=>{ if(!ALL_PRODUCTS.some(p=>p.id===id)) delete cart[id]; });
 
 function saveCart(){ try{ localStorage.setItem("embervine-cart", JSON.stringify(cart)); }catch(e){} }
 function cartCount(){ return Object.values(cart).reduce((a,b)=>a+b,0); }
