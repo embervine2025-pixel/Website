@@ -958,31 +958,33 @@
   .cabinet.on .coin-label::after{content:" OK";}
 
   .coin{
-    width:66px;height:66px;
-    border-radius:50%;
-    background:
-      radial-gradient(circle at 32% 26%, #fff3c2 0%, #f5d876 22%, #e0b530 55%, #a97f18 85%, #8a6710 100%);
-    border:4px solid #c29a2e;
-    box-shadow:
-      0 7px 16px rgba(0,0,0,.55),
-      inset 0 0 0 4px rgba(255,255,255,.22),
-      inset 0 -4px 6px rgba(120,85,10,.5);
+    width:74px;height:74px;
     cursor:pointer;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    font-family:var(--px);
-    font-size:8px;
-    line-height:1.5;
-    color:#6e5410;
-    text-align:center;
-    text-shadow:0 1px 0 rgba(255,240,180,.6);
-    transition:transform .15s ease;
     flex:0 0 auto;
-    animation:coinBob 2s ease-in-out infinite;
+    animation:coinBob 2.4s ease-in-out infinite;
   }
-  .coin:hover{transform:scale(1.1);}
-  @keyframes coinBob{0%,100%{transform:translateY(0);}50%{transform:translateY(-7px);}}
+  .coin canvas{
+    width:100%;height:100%;
+    display:block;
+    image-rendering:pixelated;
+    filter:drop-shadow(0 7px 10px rgba(0,0,0,.55));
+    animation:coinFlip 3.6s linear infinite;
+  }
+  .cabinet:not(.on) .coin canvas{
+    filter:drop-shadow(0 7px 10px rgba(0,0,0,.55)) drop-shadow(0 0 12px rgba(232,193,75,.35));
+  }
+  @keyframes coinBob{0%,100%{transform:translateY(0);}50%{transform:translateY(-8px);}}
+  @keyframes coinFlip{
+    0%, 50% {transform:scaleX(1);}
+    54%     {transform:scaleX(.4);}
+    58%     {transform:scaleX(.1);}
+    62%     {transform:scaleX(-.4);}
+    66%     {transform:scaleX(-1);}
+    70%     {transform:scaleX(-.4);}
+    74%     {transform:scaleX(.1);}
+    78%     {transform:scaleX(.4);}
+    82%,100%{transform:scaleX(1);}
+  }
   .coin.dropping{
     animation:coinDrop .8s ease-in forwards;
     pointer-events:none;
@@ -1197,7 +1199,7 @@
         <div class="coin-return"></div>
         <div class="coin-label" id="coin-label">INSERT COIN</div>
       </div>
-      <div class="coin" id="coin" title="Insert coin">25¢<br>SEED</div>
+      <div class="coin" id="coin" title="Insert coin — 25¢ seed token"><canvas id="coin-face"></canvas></div>
       <div class="coin-hint" id="coin-hint">CLICK THE COIN TO START THE MACHINE ►</div>
     </div>
 
@@ -1420,6 +1422,67 @@ function showLayer(name){
 const MQ_COLORS = {o:"#d1401f", L:"#f07a4a", D:"#8a2410", g:"#3f7d2c"};
 drawSprite(document.getElementById("mq-pep-l"), SHAPES.marquee, MQ_COLORS);
 drawSprite(document.getElementById("mq-pep-r"), SHAPES.marquee, MQ_COLORS);
+
+/* the 25-cent seed token, drawn pixel by pixel */
+function drawCoin(cv){
+  const S = 28;
+  cv.width = S; cv.height = S;
+  const ctx = cv.getContext("2d");
+  const cx = (S-1)/2, cy = (S-1)/2, R = 13.4;
+  const COL = {
+    edgeA:"#8a6710", edgeB:"#c29a2e",       /* ridged edge notches */
+    rimL:"#fff3c2",  rimD:"#a97f18",        /* inner rim light/shadow */
+    face:"#e0b530",  faceL:"#f0cf60"        /* coin face + sheen */
+  };
+  for(let y=0;y<S;y++){
+    for(let x=0;x<S;x++){
+      const dx = x-cx, dy = y-cy, d = Math.hypot(dx,dy);
+      if(d > R) continue;
+      let col;
+      if(d > R-2.0){
+        const notch = Math.floor((Math.atan2(dy,dx)+Math.PI) / (Math.PI/10)) % 2;
+        col = notch ? COL.edgeA : COL.edgeB;
+      } else if(d > R-3.6){
+        col = (dx+dy < 0) ? COL.rimL : COL.rimD;
+      } else {
+        col = ((x*3+y*7) % 11 === 0) ? COL.faceL : COL.face;
+      }
+      ctx.fillStyle = col;
+      ctx.fillRect(x,y,1,1);
+    }
+  }
+  /* embossed chili stamp, curving across the face */
+  const stamp = [
+    ".........g",
+    "........gg",
+    ".......oo.",
+    "......ooo.",
+    ".....oooo.",
+    "....oooo..",
+    "...oooo...",
+    "..oooo....",
+    ".oooo.....",
+    "ooo.......",
+    "oo........"
+  ];
+  const ox = 9, oy = 8;
+  stamp.forEach((row,j)=>{
+    [...row].forEach((ch,i)=>{
+      if(ch === ".") return;
+      /* relief: light catch on the upper-left of the engraving */
+      ctx.fillStyle = "#f5d876";
+      ctx.fillRect(ox+i-1, oy+j-1, 1, 1);
+    });
+  });
+  stamp.forEach((row,j)=>{
+    [...row].forEach((ch,i)=>{
+      if(ch === ".") return;
+      ctx.fillStyle = ch === "g" ? "#7a6a1c" : "#a3800f";
+      ctx.fillRect(ox+i, oy+j, 1, 1);
+    });
+  });
+}
+drawCoin(document.getElementById("coin-face"));
 
 /* ================= POWER ON ================= */
 function insertCoin(){
