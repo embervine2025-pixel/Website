@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#141018">
 <title>Embervine Seed Market — Harvest Festival Arcade — Oshawa, Ontario</title>
 <style>
   @font-face{
@@ -36,6 +37,7 @@
     --vt:"VT323","Courier New",monospace;
   }
   *{margin:0;padding:0;box-sizing:border-box;}
+  button,.tab,.coin,.coin-door{touch-action:manipulation;-webkit-tap-highlight-color:transparent;}
   html,body{height:100%;}
   body{
     background:#141018;
@@ -742,15 +744,42 @@
   }
 
   @media (max-width:600px){
-    .deck{padding:12px 10px 16px;flex-wrap:wrap;justify-content:center;}
-    .instr-card{order:5;max-width:none;flex-basis:100%;margin-top:10px;}
-    .joy{width:54px;height:70px;}
-    .btn-cluster{gap:8px;}
-    .arc-btn{width:28px;height:28px;}
-    .lower{gap:14px;flex-wrap:wrap;}
-    .coin-hint{max-width:none;text-align:center;flex-basis:100%;}
-    #screen-boot{font-size:15px;padding:18px;}
+    body{padding:14px 6px 44px;}
+    .cabinet{filter:drop-shadow(0 18px 24px rgba(0,0,0,.5));}
+    .marquee{padding:16px 16px 14px;}
     .marquee-pepper{display:none;}
+    .speaker,.kick{border-left-width:8px;border-right-width:8px;}
+    .cab-body{border-left-width:8px;border-right-width:8px;padding:12px 10px 0;}
+    .cab-body::before{left:-8px;width:8px;}
+    .cab-body::after{right:-8px;width:8px;}
+    .screen-bezel{padding:10px 10px 14px;border-radius:12px;}
+    .crt{min-height:380px;}
+    .crt .layer.active{min-height:380px;}
+    #screen-boot{font-size:15px;padding:16px 14px;}
+    #screen-market{padding:14px 10px 14px;}
+    .mkt-head{margin-bottom:10px;}
+    .tab{padding:10px 8px 9px;}
+    .shelf{padding:16px 8px 14px;min-height:0;}
+    .grid{grid-template-columns:repeat(2, 1fr);gap:18px 6px;}
+    .product canvas.sprite{width:84px;height:84px;}
+    .buy-btn{padding:10px 8px;}
+    .deck{padding:12px 10px 16px;flex-wrap:wrap;justify-content:center;gap:10px;}
+    .instr-card{order:5;max-width:none;flex-basis:100%;margin-top:8px;font-size:14px;}
+    .joy{width:54px;height:70px;}
+    .joy .stick{height:42px;}
+    .joy .base{width:46px;}
+    .btn-cluster{gap:8px;}
+    .arc-btn{width:32px;height:32px;box-shadow:0 0 0 4px #c9bb96, inset 0 -5px 0 rgba(0,0,0,.3), 0 3px 0 rgba(0,0,0,.35);}
+    .lower{gap:16px;flex-wrap:wrap;padding:20px 0 22px;}
+    .coin-door{width:170px;}
+    .coin-hint{max-width:none;text-align:center;flex-basis:100%;order:5;margin-top:2px;}
+    #toast{white-space:normal;text-align:center;line-height:1.8;width:max-content;max-width:88%;}
+    .site-foot{font-size:14px;letter-spacing:1px;padding:0 8px;margin-top:18px;}
+  }
+  @media (max-width:380px){
+    .grid{grid-template-columns:1fr;}
+    .marquee h1{font-size:12px;}
+    .marquee .sub{letter-spacing:2px;}
   }
 </style>
 </head>
