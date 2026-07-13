@@ -401,7 +401,7 @@
     position:relative;
     background:#040604;
     border-radius:18px / 24px;
-    min-height:430px;
+    height:430px;
     overflow:hidden;
     box-shadow:
       inset 0 0 80px rgba(0,0,0,.95),
@@ -487,8 +487,11 @@
   .crt .layer.active{
     display:block;
     position:relative;
-    min-height:430px;
+    height:100%;
   }
+  /* market fills the fixed screen; only the shelf scrolls */
+  #screen-market.active{display:flex;flex-direction:column;}
+  #screen-market .mkt-head,#screen-market .tabs{flex:0 0 auto;}
 
   /* --- OFF layer --- */
   #screen-off{
@@ -624,9 +627,21 @@
     border-top:none;
     border-radius:0 0 8px 8px;
     padding:20px 12px 16px;
-    min-height:300px;
+    flex:1 1 auto;
+    min-height:0;
+    overflow-y:auto;
+    overflow-x:hidden;
     background:rgba(20,30,18,.35);
+    scrollbar-width:thin;
+    scrollbar-color:rgba(90,143,76,.55) transparent;
   }
+  .shelf::-webkit-scrollbar{width:8px;}
+  .shelf::-webkit-scrollbar-track{background:transparent;}
+  .shelf::-webkit-scrollbar-thumb{
+    background:rgba(90,143,76,.5);
+    border-radius:4px;
+  }
+  .shelf::-webkit-scrollbar-thumb:hover{background:rgba(90,143,76,.75);}
   .grid{
     display:grid;
     grid-template-columns:repeat(auto-fit, minmax(150px, 1fr));
@@ -1286,8 +1301,8 @@
     .cab-body::before{left:-9px;width:9px;}
     .cab-body::after{right:-9px;width:9px;}
     .screen-bezel{padding:11px 11px 15px;border-radius:14px;}
-    .crt{min-height:380px;}
-    .crt .layer.active{min-height:380px;}
+    .crt{height:380px;}
+    .crt .layer.active{height:100%;}
     #screen-boot{font-size:15px;padding:16px 14px;}
     #screen-market{padding:14px 10px 14px;}
     .mkt-head{margin-bottom:10px;}
