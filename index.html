@@ -708,6 +708,12 @@
     line-height:1.6;
     color:#e6f2df;
     text-shadow:0 0 5px rgba(230,242,223,.35);
+    /* reserve two lines so 1- and 2-line names align prices/buttons across the row */
+    min-height:3.2em;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    align-items:center;
   }
   .product .pheat{
     font-family:var(--vt);
