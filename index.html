@@ -522,6 +522,33 @@
     100%{opacity:0;transform:scaleY(1);}
   }
 
+  /* --- CRT power-off: classic old-TV shutdown --- */
+  .crt-death{
+    position:absolute;
+    left:0;right:0;top:50%;
+    height:3px;
+    transform:translateY(-50%) scaleY(150) scaleX(1);
+    background:#eafff0;
+    box-shadow:0 0 22px 6px rgba(220,255,220,.85);
+    opacity:0;
+    pointer-events:none;
+    z-index:26;
+  }
+  .crt.powering-off .crt-death{animation:crtDeath .72s ease-in forwards;}
+  @keyframes crtDeath{
+    0%{opacity:0;transform:translateY(-50%) scaleY(150) scaleX(1);}
+    14%{opacity:1;transform:translateY(-50%) scaleY(150) scaleX(1);}
+    40%{opacity:1;transform:translateY(-50%) scaleY(1) scaleX(1);}
+    72%{opacity:1;transform:translateY(-50%) scaleY(1) scaleX(.015);}
+    100%{opacity:0;transform:translateY(-50%) scaleY(1) scaleX(.015);}
+  }
+  .crt.powering-off .layer.active{animation:crtVanish .72s ease-in forwards;}
+  @keyframes crtVanish{
+    0%{opacity:1;}
+    22%{opacity:0;}
+    100%{opacity:0;}
+  }
+
   /* --- BOOT layer --- */
   #screen-boot{
     background:var(--crt-bg);
@@ -1155,6 +1182,49 @@
   }
   .cabinet.on .coin-hint{opacity:.35;}
 
+  /* ---- power switch (only live when the machine is on) ---- */
+  .power-switch{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:7px;
+    cursor:pointer;
+    flex:0 0 auto;
+    opacity:.35;
+    pointer-events:none;
+    transition:opacity .6s ease;
+  }
+  .cabinet.on .power-switch{opacity:1;pointer-events:auto;}
+  .ps-rocker{
+    width:48px;height:27px;
+    border-radius:6px;
+    background:linear-gradient(180deg,#2a2632,#151220);
+    border:2px solid #09070f;
+    position:relative;
+    box-shadow:inset 0 2px 5px rgba(0,0,0,.65), 0 1px 0 rgba(255,255,255,.06);
+  }
+  .ps-rocker::after{
+    content:"";
+    position:absolute;top:2px;left:2px;
+    width:20px;height:19px;
+    border-radius:4px;
+    background:linear-gradient(180deg,#4a4556,#2a2636);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.15);
+    transition:transform .18s ease, background .18s ease, box-shadow .18s ease;
+  }
+  .cabinet.on .ps-rocker::after{
+    transform:translateX(22px);
+    background:linear-gradient(180deg,#ff7a6a,#c8372d);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.3), 0 0 11px rgba(255,80,70,.75);
+  }
+  .ps-label{
+    font-family:var(--px);
+    font-size:7px;
+    letter-spacing:1px;
+    color:#6a6390;
+  }
+  .cabinet.on .ps-label{color:#ff8a80;text-shadow:0 0 7px rgba(255,90,80,.55);}
+
   /* ---- kickplate & feet ---- */
   .kick{
     height:52px;
@@ -1315,6 +1385,7 @@
         </div>
 
         <div class="power-flash"></div>
+        <div class="crt-death"></div>
         <div class="crt-glass-glare"></div>
         <div class="crt-roll"></div>
         <div id="toast"></div>
@@ -1364,6 +1435,7 @@
       </div>
       <div class="coin" id="coin" title="Insert coin — 25¢ seed token"><canvas id="coin-face"></canvas></div>
       <div class="coin-hint" id="coin-hint">CLICK THE COIN TO START THE MACHINE ►</div>
+      <div class="power-switch" id="power-switch" title="Power off"><div class="ps-rocker"></div><div class="ps-label">POWER</div></div>
     </div>
 
   </div>
@@ -1635,7 +1707,8 @@ const sfx = {
   blip(){ beep(660,.06,"square",.04); },
   add(){ beep(523,.07); beep(784,.12,"square",.05,.07); },
   boot(){ beep(196,.3,"sawtooth",.03); beep(392,.2,"square",.03,.3); },
-  ready(){ [523,659,784,1046].forEach((f,i)=>beep(f,.12,"square",.05,i*.11)); }
+  ready(){ [523,659,784,1046].forEach((f,i)=>beep(f,.12,"square",.05,i*.11)); },
+  powerdown(){ beep(523,.14,"sawtooth",.05); beep(262,.2,"sawtooth",.05,.1); beep(70,.5,"sine",.05,.24); }
 };
 
 /* ================= STATE ================= */
@@ -1730,6 +1803,7 @@ drawCoin(document.getElementById("coin-face"));
 
 /* ================= POWER ON ================= */
 function insertCoin(){
+  if(crt.classList.contains("powering-off")) return;
   if(poweredOn) { sfx.coin(); toast("CREDIT ACCEPTED - ALREADY ON"); return; }
   poweredOn = true;
   const coin = document.getElementById("coin");
@@ -2094,6 +2168,28 @@ function exitAttract(){
   sfx.blip();
   resetIdle();
 }
+
+/* ================= POWER OFF ================= */
+function powerOff(){
+  if(!cabinet.classList.contains("on")) return;   /* only when fully booted */
+  if(crt.classList.contains("powering-off")) return;
+  clearTimeout(attractTimer);
+  clearInterval(attractCycle);
+  attractOn = false;
+  sfx.powerdown();
+  crt.classList.add("powering-off");
+  setTimeout(()=>{
+    poweredOn = false;
+    cabinet.classList.remove("on","lit");
+    crt.classList.remove("powering-off","powering");
+    currentTab = 0;
+    currentDetail = null;
+    showLayer("off");
+    document.getElementById("coin").classList.remove("dropping");
+  }, 760);
+}
+
+document.getElementById("power-switch").addEventListener("click", powerOff);
 
 document.addEventListener("pointerdown", e=>{
   if(attractOn){
