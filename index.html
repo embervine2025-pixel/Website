@@ -221,6 +221,7 @@
   @keyframes chase{to{background-position:20px 0, 50px 0, 0 0;}}
   .marquee h1{
     position:relative;
+    z-index:1;
     font-family:var(--px);
     font-size:clamp(13px, 2.9vw, 23px);
     line-height:1.6;
@@ -245,6 +246,7 @@
   }
   .marquee .sub{
     position:relative;
+    z-index:1;
     margin-top:9px;
     font-family:var(--vt);
     font-size:clamp(14px, 2.2vw, 19px);
@@ -253,9 +255,25 @@
     transition:color .8s ease;
   }
   .cabinet.lit .marquee .sub{color:#e0a24a;text-shadow:0 0 12px rgba(255,140,50,.65);}
+  /* pixel flames rising behind the title */
+  .marquee-flames{
+    position:absolute;
+    left:6%;
+    width:88%;
+    bottom:8px;
+    height:58px;
+    image-rendering:pixelated;
+    z-index:0;
+    opacity:0;
+    transition:opacity 1s ease;
+    pointer-events:none;
+    mix-blend-mode:screen;
+  }
+  .cabinet.lit .marquee-flames{opacity:.5;}
   .marquee-pepper{
     position:absolute;
     top:50%;
+    z-index:1;
     width:56px;height:56px;
     transform:translateY(-50%);
     image-rendering:pixelated;
@@ -796,11 +814,13 @@
     color:#dcead4;margin:6px 0;letter-spacing:1px;
   }
   .segs{display:flex;gap:3px;}
-  .seg{width:17px;height:11px;border:1px solid var(--crt-green-dim);}
+  .seg{width:17px;height:11px;border:1px solid var(--crt-green-dim);transition:background .1s ease,border-color .1s ease;}
   .seg.f{
     background:var(--crt-amber);border-color:var(--crt-amber);
     box-shadow:0 0 6px rgba(232,193,75,.45);
+    animation:segPop .22s ease;
   }
+  @keyframes segPop{0%{transform:scale(.4);}55%{transform:scale(1.25);}100%{transform:scale(1);}}
   .stat-row.hot .seg.f{
     background:var(--crt-red);border-color:var(--crt-red);
     box-shadow:0 0 6px rgba(232,106,90,.5);
@@ -1391,6 +1411,7 @@
   <div class="marquee-wrap">
     <div class="marquee">
       <div class="chase top"></div>
+      <canvas class="marquee-flames" id="mq-flames"></canvas>
       <canvas class="marquee-pepper l" id="mq-pep-l"></canvas>
       <h1>8-BIT SEEDS<span class="by">BY EMBER &amp; VINE</span></h1>
       <div class="sub">SUPERHOT PEPPER SEEDS · OSHAWA, ONT.</div>
@@ -1798,6 +1819,62 @@ const MQ_COLORS = {k:"#4a0d14", d:"#8a180c", r:"#c92f15", o:"#e84a24", L:"#ff7a4
 drawSprite(document.getElementById("mq-pep-l"), SHAPES.marquee, MQ_COLORS);
 drawSprite(document.getElementById("mq-pep-r"), SHAPES.marquee, MQ_COLORS);
 
+/* ===== pixel flames behind the marquee title (doom-fire) ===== */
+(function marqueeFire(){
+  const cv = document.getElementById("mq-flames");
+  if(!cv) return;
+  const W = 140, H = 30;
+  cv.width = W; cv.height = H;
+  const ctx = cv.getContext("2d");
+  /* warm fire ramp: transparent -> deep red -> orange -> yellow -> pale */
+  const PAL = [
+    [0,0,0,0],[40,6,2,80],[92,14,4,140],[150,30,6,185],[200,54,10,215],
+    [232,92,20,235],[248,140,36,245],[255,180,64,250],[255,214,120,254],[255,240,190,255]
+  ];
+  const MAX = PAL.length - 1;
+  const fire = new Uint8Array(W*H);
+  const img = ctx.createImageData(W,H);
+  const reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  /* bottom-row emitter: flickers, and tapers to nothing at the far edges */
+  function emit(){
+    for(let x=0;x<W;x++){
+      const edge = Math.max(0, Math.min(1, Math.min(x, W-1-x)/(W*0.16)));
+      const flick = Math.random()<0.82 ? MAX : MAX-3;
+      fire[(H-1)*W + x] = Math.round(flick * edge);
+    }
+  }
+
+  function spread(){
+    for(let y=1;y<H;y++){
+      for(let x=0;x<W;x++){
+        const below = fire[y*W + x];
+        const decay = (Math.random()*3)|0;              // 0..2 cooling
+        const nx = x + ((Math.random()*3)|0) - 1;       // drift left/right
+        const dst = (y-1)*W + (nx<0?0:nx>=W?W-1:nx);
+        const v = below - (decay & 1);
+        fire[dst] = v<0 ? 0 : v;
+      }
+    }
+  }
+  function paint(){
+    const d = img.data;
+    for(let i=0;i<W*H;i++){
+      const c = PAL[fire[i]];
+      const j = i*4;
+      d[j]=c[0]; d[j+1]=c[1]; d[j+2]=c[2]; d[j+3]=c[3];
+    }
+    ctx.putImageData(img,0,0);
+  }
+  let last = 0;
+  function loop(t){
+    if(t-last > 55){ emit(); spread(); paint(); last = t; }   // ~18fps, tidy
+    requestAnimationFrame(loop);
+  }
+  emit(); spread(); paint();
+  if(!reduce) requestAnimationFrame(loop);
+})();
+
 /* the 25-cent seed token, drawn pixel by pixel */
 function drawCoin(cv){
   const S = 28;
@@ -2050,7 +2127,8 @@ function renderDetail(){
   if(!p){ closeDetail(); return; }
 
   const statRows = Object.entries(p.stats).map(([label, val])=>{
-    const segs = [1,2,3,4,5].map(i=>`<span class="seg${i<=val?" f":""}"></span>`).join("");
+    /* render segs empty; animateStats() fills them after the screen paints */
+    const segs = [1,2,3,4,5].map(i=>`<span class="seg" data-on="${i<=val?1:0}"></span>`).join("");
     return `<div class="stat-row${label==="HEAT"?" hot":""}"><span>${label}</span><span class="segs">${segs}</span></div>`;
   }).join("");
 
@@ -2076,6 +2154,19 @@ function renderDetail(){
   drawSprite(document.getElementById("d-sprite"), SHAPES[p.shape], p.colors);
   document.getElementById("d-back").onclick = closeDetail;
   document.getElementById("d-add").onclick = ()=>addToCart(p, document.getElementById("d-add"));
+  animateStats(v);
+}
+
+/* fill the stat bars left-to-right, row by row, like a game loading a fighter */
+function animateStats(scope){
+  const rows = scope.querySelectorAll(".stat-row");
+  let step = 0;
+  rows.forEach(row=>{
+    row.querySelectorAll('.seg[data-on="1"]').forEach((seg, i)=>{
+      setTimeout(()=>{ seg.classList.add("f"); if(i===0 && poweredOn) sfx.blip(); }, 140 + step*70);
+      step++;
+    });
+  });
 }
 
 function addToCart(p, btn){
