@@ -2113,7 +2113,7 @@ function renderTab(){
 
     const btn = document.createElement("button");
     btn.className = "buy-btn";
-    btn.textContent = "START (Germinate)";
+    btn.textContent = "GROW";
     btn.onclick = (e)=>{ e.stopPropagation(); addToCart(p, btn); };
     card.appendChild(btn);
 
@@ -2160,7 +2160,7 @@ function renderDetail(){
       <div class="d-meta">${p.pack} SEEDS PER PACK · ${p.days} DAYS TO RIPE PODS · GROWN IN OSHAWA</div>
       <div class="d-buy">
         <span class="d-price">$${p.price.toFixed(2)}</span>
-        <button class="buy-btn" id="d-add">START (Germinate)</button>
+        <button class="buy-btn" id="d-add">GROW</button>
       </div>
     </div>
   `;
