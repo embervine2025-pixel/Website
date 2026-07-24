@@ -1447,6 +1447,58 @@
     .marquee h1{font-size:11px;}
     .marquee .sub{letter-spacing:2px;}
   }
+
+  /* ===== "sucked into the screen" zoom + fullscreen CRT ===== */
+  html.zoom-lock, html.zoom-lock body{overflow:hidden;}
+  #flash-overlay{
+    position:fixed; inset:0;
+    background:#f4fff0;
+    opacity:0;
+    pointer-events:none;
+    z-index:9998;
+    transition:opacity .5s ease;
+  }
+  #flash-overlay.on{opacity:1;}
+
+  /* fullscreen: the CRT becomes the entire page */
+  body.fullscreen{overflow:hidden;}
+  /* filter/transform/will-change on #cabinet would trap the fixed CRT — neutralize them */
+  body.fullscreen #cabinet{visibility:hidden;filter:none !important;transform:none !important;will-change:auto !important;}
+  body.fullscreen .crt{
+    visibility:visible;
+    position:fixed; inset:0;
+    width:100vw; height:100dvh;
+    z-index:60;
+    border-radius:0;
+  }
+  body.fullscreen .crt::after,
+  body.fullscreen .crt-glass-glare,
+  body.fullscreen .crt-death{border-radius:0;}
+  body.fullscreen .crt .layer.active{height:100dvh;}
+  /* center the market nicely on big screens instead of gluing it to the top */
+  body.fullscreen #screen-market{max-width:680px;margin:0 auto;}
+  body.fullscreen #screen-market.active{justify-content:center;}
+  body.fullscreen #screen-market .shelf{flex:0 1 auto;max-height:82vh;}
+  body.fullscreen #screen-boot{max-width:760px;margin:0 auto;}
+  body.fullscreen #screen-attract{max-width:760px;margin:0 auto;}
+
+  #fs-power{
+    position:fixed; top:14px; right:14px;
+    z-index:9999;
+    display:none;
+    width:42px; height:42px;
+    border-radius:50%;
+    border:2px solid rgba(255,255,255,.4);
+    background:radial-gradient(circle at 35% 30%, #ff8a80, #c8372d 60%, #7e1a12);
+    color:#fff; font-size:19px; line-height:1;
+    cursor:pointer;
+    box-shadow:0 2px 8px rgba(0,0,0,.5), 0 0 12px rgba(255,80,70,.5);
+    opacity:.85;
+    transition:opacity .2s ease, transform .1s ease;
+  }
+  #fs-power:hover{opacity:1;}
+  #fs-power:active{transform:scale(.9);}
+  body.fullscreen #fs-power{display:block;}
 </style>
 </head>
 <body>
@@ -1457,6 +1509,9 @@
   <div class="l1">SE<span class="flk">E</span>DS</div>
   <div class="l2">OPEN 'TIL <span class="flk2">L</span>ATE</div>
 </div>
+
+<div id="flash-overlay"></div>
+<button id="fs-power" title="Power off">⏻</button>
 
 <div class="cabinet" id="cabinet">
 
@@ -1840,7 +1895,15 @@ const sfx = {
   add(){ beep(523,.07); beep(784,.12,"square",.05,.07); },
   boot(){ beep(196,.3,"sawtooth",.03); beep(392,.2,"square",.03,.3); },
   ready(){ [523,659,784,1046].forEach((f,i)=>beep(f,.12,"square",.05,i*.11)); },
-  powerdown(){ beep(523,.14,"sawtooth",.05); beep(262,.2,"sawtooth",.05,.1); beep(70,.5,"sine",.05,.24); }
+  powerdown(){ beep(523,.14,"sawtooth",.05); beep(262,.2,"sawtooth",.05,.1); beep(70,.5,"sine",.05,.24); },
+  suck(){ try{ const ctx=ac(); const o=ctx.createOscillator(), g=ctx.createGain();
+    o.type="sawtooth";
+    o.frequency.setValueAtTime(130, ctx.currentTime);
+    o.frequency.exponentialRampToValueAtTime(1600, ctx.currentTime+0.95);
+    g.gain.setValueAtTime(0.045, ctx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime+1.0);
+    o.connect(g); g.connect(ctx.destination); o.start(); o.stop(ctx.currentTime+1.05);
+  }catch(e){} }
 };
 
 /* ================= STATE ================= */
@@ -1998,18 +2061,58 @@ function insertCoin(){
   coin.classList.add("dropping");
   sfx.coin();
 
-  /* staged power-on: coin lands, tube catches, then the CRT wakes */
+  /* staged power-on: coin lands, tube catches, then we get sucked into the screen */
   setTimeout(()=>{ sfx.clunk(); }, 700);
   setTimeout(()=>{
     cabinet.classList.add("lit");
     sfx.buzz();
   }, 1000);
-  setTimeout(()=>{
-    crt.classList.add("powering");
-    sfx.boot();
-    showLayer("boot");
-    runBoot();
-  }, 2350);
+  setTimeout(zoomIntoScreen, 1500);
+}
+
+/* fly the page into the CRT, whiteout, then make the screen the whole page */
+function zoomIntoScreen(){
+  const reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const flash = document.getElementById("flash-overlay");
+  if(reduce){ enterFullscreenBoot(); return; }
+
+  const crtRect = crt.getBoundingClientRect();
+  const cabRect = cabinet.getBoundingClientRect();
+  const cx = crtRect.left + crtRect.width/2;
+  const cy = crtRect.top + crtRect.height/2;
+  const s  = Math.max(innerWidth/crtRect.width, innerHeight/crtRect.height) * 1.08;
+  const dx = innerWidth/2 - cx;
+  const dy = innerHeight/2 - cy;
+
+  document.documentElement.classList.add("zoom-lock");
+  cabinet.style.willChange = "transform";
+  cabinet.style.transformOrigin = (cx - cabRect.left) + "px " + (cy - cabRect.top) + "px";
+  cabinet.style.transition = "transform 1.05s cubic-bezier(.55,0,.85,.45)";  /* accelerating = pulled in */
+  sfx.suck();
+  requestAnimationFrame(()=>{
+    cabinet.style.transform = "translate(" + dx + "px," + dy + "px) scale(" + s + ")";
+  });
+  flash.style.transition = "opacity .95s ease-in";
+  requestAnimationFrame(()=> flash.classList.add("on"));   /* whiteout builds as we dive in */
+
+  setTimeout(enterFullscreenBoot, 1050);
+}
+
+function enterFullscreenBoot(){
+  /* reset the zoom (hidden behind the whiteout) and switch the CRT to native fullscreen */
+  cabinet.style.transition = "none";
+  cabinet.style.transform = "none";
+  cabinet.style.willChange = "auto";
+  document.documentElement.classList.remove("zoom-lock");
+  document.body.classList.add("fullscreen");
+
+  sfx.boot();
+  showLayer("boot");
+  runBoot();
+
+  const flash = document.getElementById("flash-overlay");
+  flash.style.transition = "opacity .55s ease-out";
+  requestAnimationFrame(()=> flash.classList.remove("on"));   /* reveal the crisp fullscreen boot */
 }
 
 const BOOT_LINES = [
@@ -2403,6 +2506,9 @@ function powerOff(){
   crt.classList.add("powering-off");
   setTimeout(()=>{
     poweredOn = false;
+    document.body.classList.remove("fullscreen");   /* leave fullscreen back to the cabinet */
+    cabinet.style.transform = "none";
+    cabinet.style.willChange = "auto";
     cabinet.classList.remove("on","lit");
     crt.classList.remove("powering-off","powering");
     currentTab = 0;
@@ -2413,6 +2519,7 @@ function powerOff(){
 }
 
 document.getElementById("power-switch").addEventListener("click", powerOff);
+document.getElementById("fs-power").addEventListener("click", powerOff);
 
 document.addEventListener("pointerdown", e=>{
   if(attractOn){
