@@ -1452,13 +1452,34 @@
   html.zoom-lock, html.zoom-lock body{overflow:hidden;}
   #flash-overlay{
     position:fixed; inset:0;
-    background:#f4fff0;
+    background:#fff6e2;
     opacity:0;
     pointer-events:none;
     z-index:9998;
     transition:opacity .5s ease;
   }
   #flash-overlay.on{opacity:1;}
+
+  /* tunnel vignette: the room darkens away as you focus into the screen */
+  #tunnel{
+    position:fixed; inset:0;
+    pointer-events:none;
+    z-index:9996;
+    opacity:0;
+    background:radial-gradient(circle at var(--wx,50%) var(--wy,50%),
+      transparent 6%, rgba(0,0,0,.55) 34%, rgba(0,0,0,.94) 68%);
+  }
+  /* opacity/transform are driven per-frame from JS (see runWarp) */
+
+  /* warp streaks rushing past as you're pulled in (canvas: cheap to composite) */
+  #warp{
+    position:fixed; inset:0;
+    width:100vw; height:100vh;
+    pointer-events:none;
+    z-index:9997;
+    opacity:0;
+    transform-origin:var(--wx,50%) var(--wy,50%);
+  }
 
   /* fullscreen: the CRT becomes the entire page */
   body.fullscreen{overflow:hidden;}
@@ -1510,6 +1531,8 @@
   <div class="l2">OPEN 'TIL <span class="flk2">L</span>ATE</div>
 </div>
 
+<div id="tunnel"></div>
+<canvas id="warp"></canvas>
 <div id="flash-overlay"></div>
 <button id="fs-power" title="Power off">⏻</button>
 
@@ -2073,45 +2096,122 @@ function insertCoin(){
 /* fly the page into the CRT, whiteout, then make the screen the whole page */
 function zoomIntoScreen(){
   const reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  const flash = document.getElementById("flash-overlay");
-  if(reduce){ enterFullscreenBoot(); return; }
 
-  const crtRect = crt.getBoundingClientRect();
-  const cabRect = cabinet.getBoundingClientRect();
-  const cx = crtRect.left + crtRect.width/2;
-  const cy = crtRect.top + crtRect.height/2;
-  const s  = Math.max(innerWidth/crtRect.width, innerHeight/crtRect.height) * 1.08;
-  const dx = innerWidth/2 - cx;
-  const dy = innerHeight/2 - cy;
-
-  document.documentElement.classList.add("zoom-lock");
-  cabinet.style.willChange = "transform";
-  cabinet.style.transformOrigin = (cx - cabRect.left) + "px " + (cy - cabRect.top) + "px";
-  cabinet.style.transition = "transform 1.05s cubic-bezier(.55,0,.85,.45)";  /* accelerating = pulled in */
-  sfx.suck();
-  requestAnimationFrame(()=>{
-    cabinet.style.transform = "translate(" + dx + "px," + dy + "px) scale(" + s + ")";
-  });
-  flash.style.transition = "opacity .95s ease-in";
-  requestAnimationFrame(()=> flash.classList.add("on"));   /* whiteout builds as we dive in */
-
-  setTimeout(enterFullscreenBoot, 1050);
-}
-
-function enterFullscreenBoot(){
-  /* reset the zoom (hidden behind the whiteout) and switch the CRT to native fullscreen */
-  cabinet.style.transition = "none";
-  cabinet.style.transform = "none";
-  cabinet.style.willChange = "auto";
-  document.documentElement.classList.remove("zoom-lock");
-  document.body.classList.add("fullscreen");
-
+  /* wake the tube FIRST — you dive toward a screen that's already alive */
+  crt.classList.add("powering");
   sfx.boot();
   showLayer("boot");
   runBoot();
 
+  if(reduce){ setTimeout(enterFullscreenBoot, 400); return; }
+  setTimeout(startDive, 720);
+}
+
+/* one-off streak texture; the CSS animation just scales + fades it */
+function paintWarpStreaks(cx, cy){
+  const cv = document.getElementById("warp");
+  const W = innerWidth, H = innerHeight;
+  cv.width = W; cv.height = H;
+  const ctx = cv.getContext("2d");
+  const reach = Math.hypot(Math.max(cx, W-cx), Math.max(cy, H-cy));
+  const hole  = Math.min(W, H) * 0.11;          /* clear space around the screen itself */
+  ctx.lineCap = "round";
+  for(let i=0;i<300;i++){
+    const a  = Math.random() * Math.PI * 2;
+    const r0 = hole + Math.random() * (reach - hole) * 0.55;
+    const len = reach * (0.10 + Math.random() * 0.30);
+    const r1 = Math.min(r0 + len, reach);
+    const fade = Math.min(1, (r0 - hole) / (reach - hole) + 0.25);
+    const g = ctx.createLinearGradient(
+      cx + Math.cos(a)*r0, cy + Math.sin(a)*r0,
+      cx + Math.cos(a)*r1, cy + Math.sin(a)*r1);
+    g.addColorStop(0,   "rgba(255,226,170,0)");
+    g.addColorStop(0.5, "rgba(255,216,155," + (0.95*fade).toFixed(3) + ")");
+    g.addColorStop(1,   "rgba(255,244,215,0)");
+    ctx.strokeStyle = g;
+    ctx.lineWidth = 1.1 + Math.random()*2.6;
+    ctx.beginPath();
+    ctx.moveTo(cx + Math.cos(a)*r0, cy + Math.sin(a)*r0);
+    ctx.lineTo(cx + Math.cos(a)*r1, cy + Math.sin(a)*r1);
+    ctx.stroke();
+  }
+}
+
+/* drive the streaks + tunnel per frame (CSS animations stall on these layers) */
+let warpActive = false;
+function runWarp(dur){
+  const warp = document.getElementById("warp");
+  const tunnel = document.getElementById("tunnel");
+  const t0 = performance.now();
+  warpActive = true;
+  (function step(now){
+    if(!warpActive) return;                               /* landed — stop driving */
+    const t = Math.min(1, (now - t0) / dur);
+    const accel = t * t;                                  /* speeds up like the dive */
+    warp.style.transform = "scale(" + (1 + accel * 4).toFixed(3) + ")";
+    /* streaks bloom in, then blow past the camera */
+    warp.style.opacity = (t < 0.72 ? (t / 0.72) * 0.9 : (1 - t) / 0.28 * 0.9).toFixed(3);
+    tunnel.style.opacity = accel.toFixed(3);              /* room closes in around you */
+    if(t < 1) requestAnimationFrame(step);
+  })(t0);
+}
+
+function startDive(){
   const flash = document.getElementById("flash-overlay");
-  flash.style.transition = "opacity .55s ease-out";
+  const crtRect = crt.getBoundingClientRect();
+  const cabRect = cabinet.getBoundingClientRect();
+  const cx = crtRect.left + crtRect.width/2;
+  const cy = crtRect.top + crtRect.height/2;
+  const s  = Math.max(innerWidth/crtRect.width, innerHeight/crtRect.height) * 1.12;
+  const dx = innerWidth/2 - cx;
+  const dy = innerHeight/2 - cy;
+
+  /* streaks + tunnel radiate from the screen we're aiming at */
+  document.body.style.setProperty("--wx", cx + "px");
+  document.body.style.setProperty("--wy", cy + "px");
+  paintWarpStreaks(cx, cy);
+
+  document.documentElement.classList.add("zoom-lock");
+  cabinet.style.willChange = "transform, filter";
+  cabinet.style.transformOrigin = (cx - cabRect.left) + "px " + (cy - cabRect.top) + "px";
+
+  /* anticipation: a small pull back before the launch */
+  cabinet.style.transition = "transform .19s ease-out";
+  cabinet.style.transform = "scale(.975)";
+
+  setTimeout(()=>{
+    sfx.suck();
+    document.body.classList.add("warping");
+    runWarp(920);
+    cabinet.style.transition = "transform .92s cubic-bezier(.55,0,.9,.42), filter .92s ease-in";
+    cabinet.style.transform = "translate(" + dx + "px," + dy + "px) scale(" + s + ")";
+    cabinet.style.filter = "blur(5px) brightness(1.18)";   /* motion blur as speed builds */
+
+    /* the flash only blooms at the very end, right as we punch through */
+    setTimeout(()=>{
+      flash.style.transition = "opacity .4s ease-in";
+      flash.classList.add("on");
+    }, 520);
+
+    setTimeout(enterFullscreenBoot, 930);
+  }, 200);
+}
+
+function enterFullscreenBoot(){
+  /* land inside the machine: reset the dive and let the CRT own the page */
+  cabinet.style.transition = "none";
+  cabinet.style.transform = "none";
+  cabinet.style.filter = "";
+  cabinet.style.willChange = "auto";
+  document.documentElement.classList.remove("zoom-lock");
+  document.body.classList.remove("warping");
+  warpActive = false;                                     /* stop the rAF before clearing */
+  document.getElementById("warp").style.opacity = "0";
+  document.getElementById("tunnel").style.opacity = "0";
+  document.body.classList.add("fullscreen");
+
+  const flash = document.getElementById("flash-overlay");
+  flash.style.transition = "opacity .5s ease-out";
   requestAnimationFrame(()=> flash.classList.remove("on"));   /* reveal the crisp fullscreen boot */
 }
 
